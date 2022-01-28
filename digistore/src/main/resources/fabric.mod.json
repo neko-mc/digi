@@ -23,6 +23,7 @@
   "depends": {
     "java": "${dep_java}",
     "minecraft": "${dep_mc}",
-    "fabricloader": "${dep_fl}"
+    "fabricloader": "${dep_fl}",
+    "digicore": ">=0.1.0"
   }
 }

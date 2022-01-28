@@ -4,8 +4,8 @@ plugins {
 }
 
 subprojects {
-	apply plugin: "fabric-loom"
-	apply plugin: "org.cadixdev.licenser"
+  apply plugin: "java"
+  apply plugin: "fabric-loom"
 
   sourceCompatibility = JavaVersion.VERSION_17
   targetCompatibility = JavaVersion.VERSION_17
@@ -17,6 +17,7 @@ subprojects {
   logger.lifecycle("$project.mod_name: $project.mod_version")
 
 	repositories {
+    maven { url = "https://maven.terraformersmc.com/releases/" }
 		mavenLocal()
 	}
 
@@ -24,10 +25,16 @@ subprojects {
 		minecraft "com.mojang:minecraft:$rootProject.minecraft_version"
 		mappings "net.fabricmc:yarn:$rootProject.yarn_mappings:v2"
 		modApi "net.fabricmc:fabric-loader:$rootProject.loader_version"
+
+    modRuntimeOnly "com.terraformersmc:modmenu:3.0.1"
   }
 
+	jar {
+		archiveClassifier.set "dev"
+	}
+
 	loom {
-		shareRemapCaches = true
+		shareCaches()
 	}
 
   processResources {
@@ -63,13 +70,6 @@ subprojects {
   java {
     withSourcesJar()
   }
-
-	// Disable the gen sources task on sub projects
-  afterEvaluate {
-		genSourcesWithFernFlower.enabled = false
-		genSourcesWithCfr.enabled = false
-		unpickJar.enabled = false
-	}
 }
 
 task copyJars(type: Copy, dependsOn: subprojects.tasks['jar']) {
