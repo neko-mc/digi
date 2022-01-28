@@ -6,13 +6,15 @@
 
 package dev.atakku.digi.store;
 
+import dev.atakku.digi.core.util.DigiRegistry;
 import net.fabricmc.api.ModInitializer;
 
 public class DigiStore implements ModInitializer {
-  public static final String MODID = "digistore";
+  public static final String MOD_ID = "digistore";
+  public static final DigiRegistry REGISTRY = new DigiRegistry(MOD_ID);
 
   @Override
   public void onInitialize() {
-    System.out.println("HELLO FROM " + MODID);
+    System.out.println("Initializing DigiStore");
   }
 }

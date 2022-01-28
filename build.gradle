@@ -6,6 +6,7 @@ plugins {
 subprojects {
   apply plugin: "java"
   apply plugin: "fabric-loom"
+	apply plugin: "org.cadixdev.licenser"
 
   sourceCompatibility = JavaVersion.VERSION_17
   targetCompatibility = JavaVersion.VERSION_17
@@ -74,6 +75,9 @@ subprojects {
     withSourcesJar()
   }
 }
+
+task licenseFormatAll
+subprojects { p -> licenseFormatAll.dependsOn("${p.path}:licenseFormat") }
 
 task copyJars(type: Copy, dependsOn: subprojects.tasks['jar']) {
   from subprojects.collect { it.tasks.withType(Jar) }
