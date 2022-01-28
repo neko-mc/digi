@@ -8,7 +8,7 @@
     "Atakku"
   ],
   "contact": {
-    "homepage": "https://mc.neko.rs/atakku-things"
+    "homepage": "https://mc.neko.rs/${mod_id}"
   },
   "license": "${license}",
   "icon": "assets/${mod_id}/icon.png",
