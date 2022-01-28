@@ -1,0 +1,78 @@
+plugins {
+	id 'fabric-loom' version '0.11-SNAPSHOT' apply false
+  id "org.cadixdev.licenser" version "0.6.1"
+}
+
+subprojects {
+	apply plugin: "fabric-loom"
+	apply plugin: "org.cadixdev.licenser"
+
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
+
+  version = "$rootProject.minecraft_version-$project.mod_version"
+  group = rootProject.maven_group
+  archivesBaseName = project.mod_name
+
+  logger.lifecycle("$project.mod_name: $project.mod_version")
+
+	repositories {
+		mavenLocal()
+	}
+
+	dependencies {
+		minecraft "com.mojang:minecraft:$rootProject.minecraft_version"
+		mappings "net.fabricmc:yarn:$rootProject.yarn_mappings:v2"
+		modApi "net.fabricmc:fabric-loader:$rootProject.loader_version"
+  }
+
+	loom {
+		shareRemapCaches = true
+	}
+
+  processResources {
+		inputs.property "mod_id", project.mod_id
+		inputs.property "mod_version", project.mod_version
+		inputs.property "mod_name", project.mod_name
+		inputs.property "mod_desc", project.mod_desc
+
+		inputs.property "dep_java", rootProject.dep_java
+		inputs.property "dep_mc", rootProject.dep_mc
+		inputs.property "dep_fl",  rootProject.dep_fl
+
+		filesMatching("fabric.mod.json") {
+			expand(
+        "mod_id": project.mod_id,
+        "mod_version": project.mod_version,
+        "mod_name": project.mod_name,
+        "mod_desc": project.mod_desc,
+        "license": "LGPL-3.0",
+
+        "dep_java": rootProject.dep_java,
+        "dep_mc": rootProject.dep_mc,
+        "dep_fl": rootProject.dep_fl
+      )
+		}
+	}
+
+	license {
+		header rootProject.file("HEADER")
+		include "**/*.java"
+	}
+
+  java {
+    withSourcesJar()
+  }
+
+	// Disable the gen sources task on sub projects
+  afterEvaluate {
+		genSourcesWithFernFlower.enabled = false
+		genSourcesWithCfr.enabled = false
+		unpickJar.enabled = false
+	}
+}
+
+task copyJars(type: Copy, dependsOn: subprojects.tasks['jar']) {
+  from subprojects.collect { it.tasks.withType(Jar) }
+  into "$buildDir/libs"
+}
