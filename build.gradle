@@ -135,6 +135,7 @@ subprojects {
       }
     }
   }
+  publish.mustRunAfter("${project.path}:github")
 }
 
 subprojects {
@@ -221,6 +222,7 @@ subprojects {
     addGameVersion(project.minecraft_version)
     addLoader('fabric')
   }
+  modrinth.mustRunAfter("${project.path}:curseforge")
 }
 
 // Publish to github releases
@@ -252,6 +254,7 @@ subprojects {
     }
   }
   github.dependsOn("${project.path}:remapJar")
+  github.mustRunAfter("${project.path}:modrinth")
 }
 
 
@@ -279,10 +282,10 @@ subprojects {
   task release
   //release.dependsOn("${project.path}:checkVersion")
   release.dependsOn("${project.path}:build")
-  release.dependsOn("${project.path}:publish")
   release.dependsOn("${project.path}:curseforge")
   release.dependsOn("${project.path}:modrinth")
   release.dependsOn("${project.path}:github")
+  release.dependsOn("${project.path}:publish")
 }
 
 task buildAll
