@@ -27,7 +27,7 @@ subprojects {
 
   group = rootProject.maven_group
   archivesBaseName = "${project.mod_id}-${ENV.GITHUB_REF_NAME}"
-  version = project.mod_version + (ENV.CI ?: "+local")
+  version = project.mod_version + (ENV.CI ? "": "+local")
 
   logger.lifecycle("Building $group:$archivesBaseName:$version")
 
