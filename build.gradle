@@ -21,6 +21,7 @@ subprojects {
   apply plugin: "org.cadixdev.licenser"
   apply plugin: "com.matthewprenger.cursegradle"
   apply plugin: "com.modrinth.minotaur"
+  apply plugin: "maven-publish"
 
   sourceCompatibility = JavaVersion.VERSION_17
   targetCompatibility = JavaVersion.VERSION_17
@@ -121,6 +122,7 @@ subprojects {
   publishing {
     publications {
       maven(MavenPublication) {
+				from components.java
         artifact(remapMavenJar) {
           builtBy remapMavenJar
         }
