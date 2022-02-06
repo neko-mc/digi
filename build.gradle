@@ -276,7 +276,7 @@ subprojects {
 // Release task
 subprojects {
   task release
-  release.dependsOn("${project.path}:checkVersion")
+  //release.dependsOn("${project.path}:checkVersion")
   release.dependsOn("${project.path}:build")
   release.dependsOn("${project.path}:publish")
   release.dependsOn("${project.path}:curseforge")
