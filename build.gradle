@@ -258,7 +258,7 @@ subprojects {
 subprojects {
   task checkVersion {
     doFirst {
-      def xml = new URL("${MAVEN_URL}/dev/atakku/digi/${archivesBaseName}/maven-metadata.xml").text
+      def xml = new URL("${ENV.MAVEN_URL}/dev/atakku/digi/${archivesBaseName}/maven-metadata.xml").text
       def metadata = new XmlSlurper().parseText(xml)
       def versions = metadata.versioning.versions.version*.text();
       if (versions.contains(version)) {
@@ -266,10 +266,11 @@ subprojects {
       }
     }
   }
-  publish.mustRunAfter checkVersion
-  modrinth.mustRunAfter checkVersion
-  project.tasks.curseforge.mustRunAfter checkVersion
-  github.mustRunAfter checkVersion
+  // Temporarily remove as it doesn't work yet
+  //publish.mustRunAfter checkVersion
+  //modrinth.mustRunAfter checkVersion
+  //project.tasks.curseforge.mustRunAfter checkVersion
+  //github.mustRunAfter checkVersion
 }
 
 // Release task
