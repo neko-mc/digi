@@ -1,0 +1,10 @@
+dependencies {
+  subprojects.each {
+    if (it.path.startsWith(":digicore:digicore-")) {
+			api project(path: it.path, configuration: "namedElements")
+      if (it.findProperty("bundled") ?: "" == "true") {
+        include project(path: it.path)
+      }
+    }
+  }
+}

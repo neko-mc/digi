@@ -1,0 +1,17 @@
+pluginManagement {
+  repositories {
+    maven {
+      name = 'Fabric'
+      url = 'https://maven.fabricmc.net/'
+    }
+    mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
+
+include 'digicore:digicore-gui'
+include 'digicore:digicore-racks'
+include 'digicore:digicore-research'
+
+include 'digicore'

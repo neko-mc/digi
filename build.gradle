@@ -1,0 +1,277 @@
+buildscript {
+  dependencies {
+    classpath 'org.kohsuke:github-api:1.135'
+  }
+}
+
+plugins {
+  id "fabric-loom" version "0.11-SNAPSHOT" apply false
+  id "org.cadixdev.licenser" version "0.6.1" apply false
+  id "com.matthewprenger.cursegradle" version "1.4.0" apply false
+  id "com.modrinth.minotaur" version "1.2.1" apply false
+  id "maven-publish"
+}
+
+// Grab the environment variables
+def ENV = System.getenv()
+
+subprojects {
+  apply plugin: "java"
+  apply plugin: "fabric-loom"
+  apply plugin: "org.cadixdev.licenser"
+  apply plugin: "com.matthewprenger.cursegradle"
+  apply plugin: "com.modrinth.minotaur"
+
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
+
+  group = rootProject.maven_group
+  archivesBaseName = "${project.mod_id}-${ENV.GITHUB_REF_NAME}"
+  version = project.mod_version + (ENV.CI ?: "+local")
+
+  logger.lifecycle("Building $group:$archivesBaseName:$version")
+
+  dependencies {
+    minecraft "com.mojang:minecraft:$rootProject.minecraft_version"
+    mappings "net.fabricmc:yarn:$rootProject.yarn_mappings:v2"
+
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_version"  
+  }
+
+  jar {
+    archiveClassifier.set "dev"
+  }
+
+  loom {
+    shareCaches()
+  }
+
+  processResources {
+    inputs.property "mod_id", project.mod_id
+    inputs.property "mod_name", project.mod_name
+    inputs.property "mod_version", project.mod_version
+    inputs.property "mod_desc", project.mod_desc
+
+    inputs.property "link_home", rootProject.link_home
+    inputs.property "link_repo", rootProject.link_repo
+    inputs.property "link_discord", rootProject.link_discord
+
+    inputs.property "deps_java", rootProject.deps_java
+    inputs.property "deps_minecraft", rootProject.deps_minecraft
+    inputs.property "deps_loader",  rootProject.deps_loader
+
+    filesMatching("fabric.mod.json") {
+      expand(
+        "mod_id": project.mod_id,
+        "mod_name": project.mod_name,
+        "mod_version": project.mod_version,
+        "mod_desc": project.mod_desc,
+        "mod_license": "LGPL-3.0",
+
+        "link_home": rootProject.link_home,
+        "link_repo": rootProject.link_repo,
+        "link_discord": rootProject.link_discord,
+
+        "deps_java": rootProject.deps_java,
+        "deps_minecraft": rootProject.deps_minecraft,
+        "deps_loader": rootProject.deps_loader
+      )
+    }
+  }
+
+  license {
+    header rootProject.file("HEADER")
+    properties {
+      year = 2022
+    }
+    include "**/*.java"
+  }
+
+  java {
+    withSourcesJar()
+  }
+}
+
+// Add runtime dependencies
+subprojects {
+  repositories {
+    maven { url = "https://maven.terraformersmc.com/releases/" }
+    maven { url "https://maven.shedaniel.me" }
+  }
+
+  dependencies {
+    modRuntimeOnly "com.terraformersmc:modmenu:3.0.1"
+    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:7.2.409" 
+  }
+}
+
+// Maven jar
+import net.fabricmc.loom.task.RemapJarTask;
+subprojects {
+  task remapMavenJar(type: RemapJarTask, dependsOn: jar) { 
+    input = jar.archiveFile
+    archiveFileName = "${archivesBaseName}-${project.version}-maven.jar"
+    addNestedDependencies = false
+  }
+  build.dependsOn remapMavenJar
+}
+
+// Publish to maven
+subprojects {
+  publishing {
+    publications {
+      maven(MavenPublication) {
+        artifact(remapMavenJar) {
+          builtBy remapMavenJar
+        }
+        artifact(sourcesJar) {
+          builtBy remapSourcesJar
+        }
+        if (project.findProperty("javadoc") == "true") {
+          artifact(javadocJar) 
+        }
+      }
+    }
+  }
+}
+
+subprojects {
+  if (project.findProperty("maven") == "true") {
+    publishing {
+      repositories {
+        if (!ENV.CI) {
+          mavenLocal()
+        }
+        if (ENV.MAVEN_URL) {
+          maven {
+            url ENV.MAVEN_URL
+            credentials {
+              username ENV.MAVEN_USERNAME
+              password ENV.MAVEN_PASSWORD
+            }
+          }
+        }
+        if (ENV.GITHUB_TOKEN) {
+          maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/" + ENV.GITHUB_REPOSITORY
+            credentials {
+              username = ENV.GITHUB_ACTOR
+              password = ENV.GITHUB_TOKEN
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Publish to curseforge
+subprojects {
+  curseforge {
+    if (ENV.CURSEFORGE_API_KEY) {
+      apiKey = ENV.CURSEFORGE_API_KEY
+    }
+    if (project.hasProperty("curseforge_id")) {
+      project {
+        id = project.curseforge_id
+
+        mainArtifact(remapJar) {
+          changelog = ENV.CHANGELOG ?: "No changelog provided"
+          displayName = "[${ENV.GITHUB_REF_NAME}] ${project.mod_name} ${version}"
+          releaseType = project.findProperty("version_type") ?: ENV.RELEASE_CHANNEL ?: "release"
+        }
+          
+        addGameVersion rootProject.minecraft_version
+        addGameVersion "Fabric"
+
+        afterEvaluate {
+          uploadTask.dependsOn("remapJar")
+        }
+      }
+    }
+
+    options {
+      forgeGradleIntegration = false
+    }
+  }
+}
+
+// Publish to modrinth
+import com.modrinth.minotaur.TaskModrinthUpload;
+
+subprojects {
+  task modrinth(type: TaskModrinthUpload, dependsOn: remapJar) {
+    onlyIf {
+      ENV.MODRINTH_TOKEN && project.hasProperty("modrinth_id")
+    }
+
+    token = ENV.MODRINTH_TOKEN
+
+    projectId = project.modrinth_id
+    versionNumber = version
+    versionName = "[${ENV.GITHUB_REF_NAME}] ${project.mod_name} ${version}"
+    versionType = project.findProperty("version_type") ?: ENV.RELEASE_CHANNEL ?: "release"
+
+    changelog = ENV.CHANGELOG ?: "No changelog provided"
+    uploadFile = remapJar
+
+    addGameVersion(project.minecraft_version)
+    addLoader('fabric')
+  }
+}
+
+// Publish to github releases
+import org.kohsuke.github.GHReleaseBuilder;
+import org.kohsuke.github.GitHub;
+
+subprojects {
+  task github() {
+    onlyIf {
+      ENV.GITHUB_TOKEN
+    }
+
+    doLast {
+      def github = GitHub.connectUsingOAuth(ENV.GITHUB_TOKEN as String)
+      def repository = github.getRepository(ENV.GITHUB_REPOSITORY)
+
+      def releaseBuilder = new GHReleaseBuilder(repository, version as String)
+      releaseBuilder.name("${archivesBaseName}-${version}")
+      releaseBuilder.body(ENV.CHANGELOG ?: "No changelog provided")
+      releaseBuilder.commitish(ENV.GITHUB_REF_NAME)
+
+      def release = releaseBuilder.create()
+      release.uploadAsset(remapJar, "application/java-archive");
+      //release.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}-maven.jar"), "application/java-archive");
+      release.uploadAsset(sourcesJar, "application/java-archive");
+      if (project.findProperty("javadoc") ?: "" == "true") {
+        release.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}-javadoc.jar"), "application/java-archive");
+      }
+    }
+  }
+}
+
+
+// A task to check that the version hasn't been published before
+subprojects {
+  task checkVersion {
+    doFirst {
+      def xml = new URL("${MAVEN_URL}/dev/atakku/digi/${archivesBaseName}/maven-metadata.xml").text
+      def metadata = new XmlSlurper().parseText(xml)
+      def versions = metadata.versioning.versions.version*.text();
+      if (versions.contains(version)) {
+        throw new RuntimeException("${version} has already been released!")
+      }
+    }
+  }
+  publish.mustRunAfter checkVersion
+  modrinth.mustRunAfter checkVersion
+  project.tasks.curseforge.mustRunAfter checkVersion
+  github.mustRunAfter checkVersion
+}
+
+
+task buildAll
+subprojects { buildAll.dependsOn("${project.path}:build") }
+task licenseFormatAll
+subprojects { licenseFormatAll.dependsOn("${project.path}:licenseFormat") }
