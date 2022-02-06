@@ -11,9 +11,11 @@ on:
         - beta
         - alpha
       subproject:
+        type: choice
         description: 'Subproject'     
         required: true
-        default: 'digicore'
+        options: 
+        - digicore
 jobs:
   release:
     runs-on: self-hosted
