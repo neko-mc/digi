@@ -16,6 +16,7 @@ on:
         required: true
         options: 
         - digicore
+        - digistore
 jobs:
   release:
     runs-on: self-hosted
