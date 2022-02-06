@@ -129,7 +129,7 @@ subprojects {
         artifact(sourcesJar) {
           builtBy remapSourcesJar
         }
-        if (project.findProperty("javadoc") == "true") {
+        if (project.findProperty("build_javadoc") == "true") {
           artifact(javadocJar) 
         }
       }
@@ -248,7 +248,7 @@ subprojects {
       release.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}.jar"), "application/java-archive");
       release.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}-maven.jar"), "application/java-archive");
       release.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}-sources.jar"), "application/java-archive");
-      //if (project.findProperty("javadoc") ?: "" == "true") {
+      //if (project.findProperty("build_javadoc") ?: "" == "true") {
       //  release.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}-javadoc.jar"), "application/java-archive");
       //}
     }
@@ -271,10 +271,10 @@ subprojects {
     }
   }
   // Temporarily remove as it doesn't work yet
-  //publish.mustRunAfter checkVersion
-  //modrinth.mustRunAfter checkVersion
-  //project.tasks.curseforge.mustRunAfter checkVersion
-  //github.mustRunAfter checkVersion
+  publish.mustRunAfter checkVersion
+  modrinth.mustRunAfter checkVersion
+  project.tasks.curseforge.mustRunAfter checkVersion
+  github.mustRunAfter checkVersion
 }
 
 // Release task
