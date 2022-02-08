@@ -7,7 +7,7 @@ buildscript {
 plugins {
   id "fabric-loom" version "0.11-SNAPSHOT" apply false
   id "org.cadixdev.licenser" version "0.6.1" apply false
-  id "com.matthewprenger.cursegradle" version "1.4.0" apply false
+  id "net.darkhax.curseforgegradle" version "1.0.9" apply false
   id "com.modrinth.minotaur" version "1.2.1" apply false
   id "maven-publish"
 }
@@ -19,7 +19,7 @@ subprojects {
   apply plugin: "java"
   apply plugin: "fabric-loom"
   apply plugin: "org.cadixdev.licenser"
-  apply plugin: "com.matthewprenger.cursegradle"
+  apply plugin: "net.darkhax.curseforgegradle"
   apply plugin: "com.modrinth.minotaur"
   apply plugin: "maven-publish"
 
@@ -170,33 +170,30 @@ subprojects {
 }
 
 // Publish to curseforge
+import net.darkhax.curseforgegradle.TaskPublishCurseForge;
 subprojects {
-  curseforge {
-    if (ENV.CURSEFORGE_API_KEY) {
-      apiKey = ENV.CURSEFORGE_API_KEY
+  task publishCurseForge(type: TaskPublishCurseForge, dependsOn: remapJar) {
+    onlyIf {
+      ENV.CURSEFORGE_API_KEY && project.hasProperty("curseforge_id")
     }
-    if (project.hasProperty("curseforge_id")) {
-      project {
-        id = project.curseforge_id
+    apiToken = ENV.CURSEFORGE_API_KEY
 
-        mainArtifact(remapJar) {
-          changelog = ENV.CHANGELOG ?: "No changelog provided"
-          displayName = "[${ENV.GITHUB_REF_NAME}] ${project.mod_name} ${version}"
-          releaseType = project.findProperty("version_type") ?: ENV.RELEASE_CHANNEL ?: "release"
-        }
-          
-        addGameVersion rootProject.minecraft_version
-        addGameVersion "Fabric"
+    // The main file to upload
+    def mainFile = upload(project.curseforge_id, remapJar)
+    mainFile.releaseType = project.findProperty("version_type") ?: ENV.RELEASE_CHANNEL ?: "release"
+    mainFile.changelog = ENV.CHANGELOG ?: "No changelog provided"
+    mainFile.changelogType = 'text'
+    mainFile.displayName = "[${ENV.GITHUB_REF_NAME}] ${project.mod_name} ${version}"
+    /*mainFile.addIncompatibility('bookshelf')
 
-        afterEvaluate {
-          uploadTask.dependsOn("remapJar")
-        }
-      }
-    }
+    // The sources JAR
+    def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
+    sourcesFile.changelog = file('changelog.md')
 
-    options {
-      forgeGradleIntegration = false
-    }
+    // The JavaDoc JAR
+    def javadocFile = mainFile.withAdditionalFile(javadocJar)
+    javadocFile.changelog = 'This is a test JavaDoc file!'
+    javadocFile.displayName = "JavaDoc - ${version}"*/
   }
 }
 
