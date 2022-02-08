@@ -172,7 +172,7 @@ subprojects {
 // Publish to curseforge
 import net.darkhax.curseforgegradle.TaskPublishCurseForge;
 subprojects {
-  task publishCurseForge(type: TaskPublishCurseForge, dependsOn: remapJar) {
+  task curseforge(type: TaskPublishCurseForge, dependsOn: remapJar) {
     onlyIf {
       ENV.CURSEFORGE_API_KEY && project.hasProperty("curseforge_id")
     }
@@ -270,7 +270,7 @@ subprojects {
   // Temporarily remove as it doesn't work yet
   publish.mustRunAfter checkVersion
   modrinth.mustRunAfter checkVersion
-  project.tasks.curseforge.mustRunAfter checkVersion
+  curseforge.mustRunAfter checkVersion
   github.mustRunAfter checkVersion
 }
 
