@@ -178,20 +178,20 @@ subprojects {
     }
     apiToken = ENV.CURSEFORGE_API_KEY
 
-    // The main file to upload
     def mainFile = upload(project.curseforge_id, remapJar)
     mainFile.releaseType = project.findProperty("version_type") ?: ENV.RELEASE_CHANNEL ?: "release"
     mainFile.changelog = ENV.CHANGELOG ?: "No changelog provided"
     mainFile.changelogType = 'text'
     mainFile.displayName = "[${ENV.GITHUB_REF_NAME}] ${project.mod_name} ${version}"
-    /*mainFile.addIncompatibility('bookshelf')
+    //mainFile.addIncompatibility('bookshelf')
 
-    // The sources JAR
+    def mavenFile = mainFile.withAdditionalFile(remapMavenJar)
+    mavenFile.releaseType = project.findProperty("version_type") ?: ENV.RELEASE_CHANNEL ?: "release"
+
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
-    sourcesFile.changelog = file('changelog.md')
+    sourcesFile.releaseType = project.findProperty("version_type") ?: ENV.RELEASE_CHANNEL ?: "release"
 
-    // The JavaDoc JAR
-    def javadocFile = mainFile.withAdditionalFile(javadocJar)
+    /*def javadocFile = mainFile.withAdditionalFile(javadocJar)
     javadocFile.changelog = 'This is a test JavaDoc file!'
     javadocFile.displayName = "JavaDoc - ${version}"*/
   }
